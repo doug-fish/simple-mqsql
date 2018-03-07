@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mml-mysql
+  labels:
+    app: mmlsql
+spec:
+  ports:
+    - port: 3306
+  selector:
+    app: mmlsql
+  clusterIP: None
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mml-mysql-pv-claim
+  labels:
+    app: mmlsql
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 30Gi
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: mml-mysql
+  labels:
+    app: mmlsql
+spec:
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mmlsql
+    spec:
+      containers:
+      - image: mml/mml-mysql
+        name: mysql
+        ports:
+        - containerPort: 3306
+          name: mysql
+        volumeMounts:
+        - name: mysql-persistent-storage
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql-persistent-storage
+        persistentVolumeClaim:
+          claimName: mml-mysql-pv-claim
